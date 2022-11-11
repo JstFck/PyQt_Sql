@@ -2,7 +2,7 @@ import sys
 import sqlite3
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLabel, QLineEdit, QFileDialog, \
-    QInputDialog, QTableWidget, QComboBox, QVBoxLayout
+    QInputDialog, QTableWidget, QComboBox, QVBoxLayout, QTableWidgetItem
 
 
 global db_dict
@@ -16,25 +16,36 @@ class Open(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Работа с базой данных')
-        self.setGeometry(300, 300, 635, 335)
+        self.setGeometry(300, 300, 675, 335)
 
-        self.db_choice = QInputDialog.getItem(self, 'Работа с базой данных', 'Выберите базу данных',
-                                                    db_dict.keys(), 1, False)
-        print(self.db_choice[0])
-        self.con = sqlite3.connect(self.db_choice[0])
-        self.cur = self.con.cursor()
+        self.db_choice = QComboBox(self)
+        self.db_choice.addItems(db_dict)
+        self.db_choice.move(10, 10)
+        self.db_choice.resize(150, 20)
+
+        self.start_btn = QPushButton('Загрузить', self)
+        self.start_btn.move(160, 10)
+        self.start_btn.resize(75, 20)
+        self.start_btn.clicked.connect(self.start_db)
+
         self.table = QTableWidget(self)
         self.table.setColumnCount(5)
         self.table.setRowCount(0)
+        self.table.move(10, 40)
+        self.table.resize(615, 315)
 
-        res = self.cur.execute("""SELECT * FROM Films""").fetchall()
-        print(res)
+    def start_db(self):
+
+        con = sqlite3.connect(db_dict[self.db_choice.currentText()])
+        cur = con.cursor()
+
+        res = cur.execute("""SELECT * FROM Films""").fetchall()
         for i, row in enumerate(res):
-            self.table.setRowCount(self.table.rowCount() + 1)
+            self.table.setRowCount(
+                self.table.rowCount() + 1)
             for j, elem in enumerate(row):
-                self.table.setItem(i, j, QTableWidget(str(elem)))
-
-    # Доделать класс (проблема с бд в execute())
+                self.table.setItem(
+                    i, j, QTableWidgetItem(str(elem)))
 
 
 class Create(QWidget):
@@ -48,7 +59,7 @@ class Create(QWidget):
 
         self.name_label = QLabel('Введите имя базы данных', self)
         self.name_label.move(10, 10)
-        self.file_label = QLabel('Выберите файл', self)
+        self.file_label = QLabel('Выберать файл', self)
         self.file_label.move(10, 60)
         self.save_label = QLabel('                               ', self)
         self.save_label.move(10, 130)
@@ -57,11 +68,18 @@ class Create(QWidget):
         self.db_btn.move(10, 90)
         self.db_btn.clicked.connect(self.choice_db)
 
-        self.name_db = QLineEdit(self)
+        count_db = 0
+        standard_db_name = 'data_base'
+
+        if standard_db_name in db_dict.keys():
+            count_db += 1
+            standard_db_name += f' ({count_db})'
+
+        self.name_db = QLineEdit(standard_db_name, self)
         self.name_db.move(10, 30)
 
     def choice_db(self):
-        self.file_db = QFileDialog.getOpenFileName(self, 'Выберите базу данных', '',
+        self.file_db = QFileDialog.getOpenFileName(self, 'Выберать базу данных', '',
                                                    'Файл (*.sqlite);;Файл (*.sql);;Все файлы (*)')
         db_dict[self.name_db.text()] = self.file_db[0]
         self.save_label.setText('Сохранено')
@@ -107,7 +125,7 @@ class Edit(QWidget):
         self.save_label.setText('Сохранено')
 
     def edit_file(self):
-        db_dict[self.db.currentText()] = QFileDialog.getOpenFileName(self, 'Выберите базу данных', '',
+        db_dict[self.db.currentText()] = QFileDialog.getOpenFileName(self, 'Выберать базу данных', '',
                                                                      'Файл (*.sqlite);;Файл (*.sql);;Все файлы (*)')[0]
         self.save_label.setText('Сохранено')
 
